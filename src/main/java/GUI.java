@@ -50,6 +50,18 @@ public class GUI {
             sourcePathText = Main.sourceFolder.getAbsolutePath();
         }
 
+        JProgressBar playProgressBar = new JProgressBar();
+        playProgressBar.setStringPainted(true);
+        playProgressBar.setString("Not Playing.");
+        playProgressBar.setValue(0);
+        playProgressBar.setMaximum(100);
+
+        JProgressBar recordProgressBar = new JProgressBar();
+        recordProgressBar.setStringPainted(true);
+        recordProgressBar.setString("Not Recording.");
+        recordProgressBar.setValue(0);
+        recordProgressBar.setMaximum(100);
+
         JLabel destinationText = new JLabel("Destination folder: " + destinationPathText);
         JLabel sourceText = new JLabel("Source folder: " + sourcePathText);
         JLabel selectedFileText = new JLabel("Selected File: " + "Nothing to show.");
@@ -61,6 +73,8 @@ public class GUI {
         textPanel.add(sourceText);
         textPanel.add(recordingText);
         textPanel.add(playingText);
+        textPanel.add(playProgressBar);
+        textPanel.add(recordProgressBar);
 
         // TOP MENU
 
@@ -145,28 +159,32 @@ public class GUI {
                         try {
                             MultimediaInfo mi = encoder.getInfo(processedSourceFolder.getCurrent());
                             long ls = mi.getDuration();
-                            milliseconds = (ls/2) + 200;
+                            milliseconds = (ls) + 200;
                         } catch (Exception ex) {
                             ex.printStackTrace();
                         }
                         double finalMilliseconds = milliseconds;
+                        playProgressBar.setString("Playing!");
                         Thread thread = new Thread() {
                             double currentSecond = 0;
 
                             @Override
                             public void run() {
                                 while (currentSecond <= finalMilliseconds) {
-                                    recordingText.setText("Playing: " + trimDouble((currentSecond / 1000), 1) + "/" + (finalMilliseconds / 1000));
+                                    playProgressBar.setValue((int) ((currentSecond/finalMilliseconds)*100));
+                                    playingText.setText("Playing: " + trimDouble((currentSecond / 1000), 1) + "/" + (finalMilliseconds / 1000));
                                     try {
                                         Thread.sleep(1);
                                     } catch (InterruptedException ex) {
                                         currentSecond = finalMilliseconds + 4;
                                         return;
                                     }
-                                    recordingText.setText("Playing: " + trimDouble((currentSecond / 1000), 1) + "/" + (finalMilliseconds / 1000));
-                                    currentSecond += 1;
+                                    playingText.setText("Playing: " + trimDouble((currentSecond / 1000), 1) + "/" + (finalMilliseconds / 1000));
+                                    currentSecond += 2;
                                     if (currentSecond > finalMilliseconds) {
-                                        recordingText.setText("Not playing.");
+                                        playProgressBar.setValue(0);
+                                        playProgressBar.setString("Not Playing.");
+                                        playingText.setText("Not playing.");
                                     }
                                 }
                             }
@@ -189,17 +207,19 @@ public class GUI {
                         try {
                             MultimediaInfo mi = encoder.getInfo(processedSourceFolder.getCurrent());
                             long ls = mi.getDuration();
-                            milliseconds = (ls/2) + 200;
+                            milliseconds = (ls) + 200;
                         } catch (Exception ex) {
                             ex.printStackTrace();
                         }
                         double finalMilliseconds = milliseconds;
+                        recordProgressBar.setString("Recording!");
                         Thread thread = new Thread() {
                             double currentSecond = 0;
 
                             @Override
                             public void run() {
                                 while (currentSecond <= finalMilliseconds) {
+                                    recordProgressBar.setValue((int) ((currentSecond/finalMilliseconds)*100));
                                     recordingText.setText("Recording: " + trimDouble((currentSecond / 1000), 1) + "/" + (finalMilliseconds / 1000));
                                     try {
                                         Thread.sleep(1);
@@ -208,15 +228,17 @@ public class GUI {
                                         return;
                                     }
                                     recordingText.setText("Recording: " + trimDouble((currentSecond / 1000), 1) + "/" + (finalMilliseconds / 1000));
-                                    currentSecond += 1;
+                                    currentSecond += 2;
                                     if (currentSecond > finalMilliseconds) {
+                                        recordProgressBar.setValue(0);
+                                        recordProgressBar.setString("Not Recording.");
                                         recordingText.setText("Not recording.");
                                     }
                                 }
                             }
                         };
                         thread.start();
-                        Recorder.record(milliseconds);
+                        Recorder.record(milliseconds + 200);
 
                         recordThread = thread;
                     }
